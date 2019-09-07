@@ -6,12 +6,7 @@ module uart(
     typedef enum {IDLE, START, DATA, PAR, STOP} uart_states;
     uart_states state;
     
-    logic data_arr[8:0];
     int data_counter = 0;
-    logic start_baud = 0;
-    logic parity_baud;
-    logic stop_baud[1:0];
-    logic curr_rx;
     
     //initial begin
     always @ (rx) begin
@@ -35,7 +30,7 @@ module uart(
                 
             STOP : begin
                     data_counter = data_counter + 1;
-                    if (data_counter == 4) begin
+                    if (data_counter == 2) begin
                         data_counter = 0;
                         state = IDLE;
                     end 

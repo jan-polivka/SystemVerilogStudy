@@ -12,30 +12,46 @@ interface intf_object(input bit clk);
 
 endinterface
 
+class trans_class;
+
+    logic data_arr[8];
+    
+    function new();
+        data_arr = '{1,0,1,1,0,1,1,0};
+    endfunction
+    
+    function logic get_val(int index);    
+        return data_arr[index];;
+    endfunction
+
+endclass
+
 
 module test(intf_object.DUT intf);
 
     typedef enum {IDLE, START, DATA, PAR, STOP} uart_states;
-  
-    logic data_arr[8:0];
+    
+    trans_class trans;
     int data_counter;
-    logic start_baud;
-    logic parity_baud;
-    logic stop_baud[1:0];
+    
+    logic trans_val;
     
     
     uart_states state;
     
     uart dut (.rx(intf.cb.rx), .tx(intf.cb.tx));
-    logic send_bit;
+    
+    initial begin
+        trans = new();    
+    end
     
     always @ (intf.cb) begin
         
         case (state)
             IDLE : begin
-                    send_bit = 1;
                     intf.cb.rx <= 1;
                     data_counter = 0;
+                    @ (intf.cb);
                     state = START;
                 end
                 
@@ -45,8 +61,7 @@ module test(intf_object.DUT intf);
                 end
                 
             DATA : begin
-                    intf.cb.rx <= send_bit;
-                    send_bit = ~send_bit;
+                    intf.cb.rx <= trans.get_val(data_counter);
                     
                     data_counter = data_counter + 1;
                     if (data_counter == 8) begin
@@ -59,7 +74,7 @@ module test(intf_object.DUT intf);
             STOP : begin
                     intf.cb.rx <= 1;
                     data_counter = data_counter + 1;
-                    if (data_counter == 2) begin
+                    if (data_counter == 1) begin
                         data_counter = 0;
                         state = IDLE;
                     end
